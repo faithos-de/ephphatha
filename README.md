@@ -50,7 +50,7 @@ Press Start 2P Project Authors), all under the SIL Open Font License 1.1; the li
       "where": "js/akt2.js:412",
       "speaker": "Jesus",
       "before": { "text": "…", "audio": "old/a1b2c3d4.mp3" },
-      "after":  { "text": "…", "audio": "new/e5f6a7b8.mp3", "takes": [ { "label": "Fassung 2", "audio": "new/e5f6a7b8-2.mp3" } ] },
+      "after":  { "text": "…", "audio": "new/e5f6a7b8.mp3", "label": "Fassung 1", "takes": [ { "label": "Fassung 2", "audio": "new/e5f6a7b8-2.mp3" } ] },
       "note": "Why the text changed, shown under the item"
     }
   ]

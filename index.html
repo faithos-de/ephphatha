@@ -267,7 +267,7 @@ function matches(it) {
 }
 function takesOf(it) {
   const a = it.after || {};
-  return [{ label: S.take + ' 1', audio: a.audio }, ...(a.takes || []).map((t, k) => ({ label: t.label || S.take + ' ' + (k + 2), audio: t.audio }))];
+  return [{ label: a.label || S.take + ' 1', audio: a.audio }, ...(a.takes || []).map((t, k) => ({ label: t.label || S.take + ' ' + (k + 2), audio: t.audio }))];
 }
 const takeIndex = it => Math.max(0, Math.min((V[it.id] || {}).take || 0, takesOf(it).length - 1));
 function playBtn(id, side, audio) {
