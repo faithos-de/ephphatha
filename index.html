@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<title>Ephphatha</title>
+<style>
+:root {
+  --bg: #f5f2ea; --surface: #fffdf8; --sunk: #eee9de; --ink: #221f19; --muted: #645d51; --line: #e0d9ca;
+  --accent: #7a4f0e; --accent-soft: #f3e6cf; --focus: #b5761a;
+  --ok: #2d6a39; --ok-soft: #e1eedd; --redo: #a23b26; --redo-soft: #f6e0d8; --text: #2b5687; --text-soft: #dfe8f3;
+  --ins: #d9ead0; --del: #f1dad2; --shadow: 0 1px 2px rgba(60, 45, 20, .06), 0 4px 14px rgba(60, 45, 20, .06);
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15130f; --surface: #1e1b16; --sunk: #191712; --ink: #ece6d9; --muted: #a79f90; --line: #332e26;
+    --accent: #e0b062; --accent-soft: #3a2e1b; --focus: #e0b062;
+    --ok: #8fcf98; --ok-soft: #1f3322; --redo: #f0a08c; --redo-soft: #3d2019; --text: #9cc2ef; --text-soft: #1c2a3b;
+    --ins: #24391d; --del: #45231b; --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 14px rgba(0, 0, 0, .25);
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 var(--sans); }
+::selection { background: var(--accent-soft); color: var(--ink); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+
+header {
+  position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px); -webkit-backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid var(--line); padding: 12px max(16px, env(safe-area-inset-left)) 10px;
+}
+.bar { max-width: 1120px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+h1 { font-size: 1.05rem; font-weight: 650; margin: 0; letter-spacing: -.01em; }
+.progress { color: var(--muted); font-variant-numeric: tabular-nums; font-size: .9rem; }
+.progress b { color: var(--ink); font-weight: 600; }
+.save { margin-left: auto; font-size: .85rem; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+.save.err { color: var(--redo); }
+.save .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+.save.busy .dot { background: var(--focus); }
+.save.err .dot { background: var(--redo); }
+.track { height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; flex-basis: 100%; }
+.track i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s ease-out; }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; flex-basis: 100%; min-width: 0; }
+.filters { min-width: 0; display: flex; gap: 2px; background: var(--sunk); padding: 3px; border-radius: 10px; overflow-x: auto; max-width: 100%; }
+.filters button {
+  border: 0; background: none; padding: 6px 10px; border-radius: 8px; white-space: nowrap; color: var(--muted);
+  font-size: .88rem; min-height: 32px;
+}
+.filters button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.filters .n { font-variant-numeric: tabular-nums; margin-left: 4px; opacity: .75; }
+.search { flex: 1 1 180px; min-width: 0; }
+.search input {
+  width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 7px 10px; min-height: 36px;
+}
+.search input::placeholder { color: var(--muted); }
+.btn {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 7px 12px; min-height: 36px;
+  display: inline-flex; align-items: center; gap: 6px; font-size: .9rem;
+}
+.btn:hover { border-color: var(--muted); }
+.btn svg { width: 16px; height: 16px; }
+
+main { max-width: 1120px; margin: 0 auto; padding: 8px max(16px, env(safe-area-inset-left)) 120px; }
+.group { font-size: .8rem; font-weight: 650; color: var(--muted); margin: 28px 4px 8px; letter-spacing: .02em; }
+.empty, .notice { color: var(--muted); padding: 48px 8px; text-align: center; }
+.notice b { color: var(--ink); display: block; font-size: 1.05rem; margin-bottom: 6px; }
+
+.line {
+  background: var(--surface); border-radius: 14px; box-shadow: var(--shadow); padding: 14px 16px 12px; margin: 10px 0;
+  scroll-margin-top: 150px; transition: background-color .15s ease-out;
+}
+.line.active { background: color-mix(in srgb, var(--surface) 82%, var(--accent-soft)); }
+.meta { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; margin-bottom: 10px; }
+.ref { font-weight: 650; }
+.speaker { color: var(--muted); }
+.where { color: var(--muted); font: .78rem var(--mono); margin-left: auto; }
+.panes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.pane { min-width: 0; }
+.pane h3 { margin: 0 0 6px; font-size: .75rem; font-weight: 600; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.pane p { margin: 0; font: 1.04rem/1.55 var(--serif); overflow-wrap: anywhere; }
+.pane.before p { color: color-mix(in srgb, var(--ink) 78%, var(--bg)); }
+del { background: var(--del); text-decoration: line-through; text-decoration-color: var(--redo); border-radius: 3px; padding: 0 1px; }
+ins { background: var(--ins); text-decoration: none; border-radius: 3px; padding: 0 1px; }
+.play {
+  width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface);
+  display: inline-grid; place-items: center; flex: none; position: relative;
+}
+.play:hover { border-color: var(--accent); }
+.play svg { width: 14px; height: 14px; fill: var(--ink); }
+.play[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); }
+.play[aria-pressed="true"] svg { fill: var(--surface); }
+.play:disabled { opacity: .35; cursor: default; }
+.pane .bar2 { height: 2px; background: var(--line); margin-top: 8px; border-radius: 1px; overflow: hidden; }
+.pane .bar2 i { display: block; height: 100%; width: 0; background: var(--accent); }
+.takes { display: inline-flex; gap: 4px; margin-left: 4px; }
+.takes button { border: 1px solid var(--line); background: none; border-radius: 999px; padding: 2px 9px; font-size: .75rem; color: var(--muted); min-height: 26px; }
+.takes button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.why { margin: 10px 0 0; font-size: .85rem; color: var(--muted); }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+.seg { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.seg button {
+  border: 1px solid var(--line); background: none; border-radius: 9px; padding: 6px 11px; min-height: 36px;
+  display: inline-flex; align-items: center; gap: 6px; font-size: .88rem; color: var(--muted);
+}
+.seg button svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.seg button:hover { color: var(--ink); border-color: var(--muted); }
+.seg button[data-s="ok"][aria-pressed="true"] { color: var(--ok); background: var(--ok-soft); border-color: transparent; }
+.seg button[data-s="redo"][aria-pressed="true"] { color: var(--redo); background: var(--redo-soft); border-color: transparent; }
+.seg button[data-s="text"][aria-pressed="true"] { color: var(--text); background: var(--text-soft); border-color: transparent; }
+.seg kbd { font: .7rem var(--mono); opacity: .6; }
+textarea {
+  flex: 1 1 260px; min-height: 36px; resize: vertical; border: 1px solid var(--line); background: var(--bg);
+  border-radius: 9px; padding: 7px 10px; line-height: 1.4; field-sizing: content; max-height: 220px;
+}
+textarea::placeholder { color: var(--muted); }
+.keys { position: fixed; bottom: 0; left: 0; right: 0; text-align: center; font-size: .78rem; color: var(--muted);
+  padding: 8px 16px calc(8px + env(safe-area-inset-bottom)); background: color-mix(in srgb, var(--bg) 92%, transparent);
+  border-top: 1px solid var(--line); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.keys kbd { font: .72rem var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; background: var(--surface); }
+@media (max-width: 760px) {
+  .panes { grid-template-columns: 1fr; gap: 12px; }
+  .where { margin-left: 0; flex-basis: 100%; }
+  .keys, .seg kbd { display: none; }
+  main { padding-bottom: 60px; }
+  .line { padding: 12px 12px 10px; border-radius: 12px; scroll-margin-top: 16px; }
+  header { position: static; }
+  .filters { flex: 1 1 100%; }
+  #exportText { display: none; }
+}
+@media (pointer: coarse) {
+  .play { width: 44px; height: 44px; }
+  .seg button, .btn, .filters button { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1 id="title">Ephphatha</h1>
+    <span class="progress" id="progress"></span>
+    <span class="save" id="save" role="status" aria-live="polite"><span class="dot"></span><span id="saveText"></span></span>
+    <div class="track" aria-hidden="true"><i id="track"></i></div>
+    <div class="tools">
+      <div class="filters" id="filters" role="group"></div>
+      <label class="search"><input id="q" type="search" autocomplete="off"></label>
+      <button class="btn" id="export" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14"/></svg>
+        <span id="exportText"></span>
+      </button>
+    </div>
+  </div>
+</header>
+<main id="list" aria-live="polite"></main>
+<div class="keys" id="keys"></div>
+<script>
+'use strict';
+const STR = {
+  de: {
+    before: 'Vorher', after: 'Neu', take: 'Fassung', all: 'Alle', open: 'Offen', ok: 'Passt', redo: 'Neu sprechen', text: 'Text ändern',
+    search: 'Suchen: Stelle, Sprecher, Wort …', export: 'Liste exportieren', note: 'Hinweis: wie es klingen soll oder was am Text zu ändern ist …',
+    progress: (d, n, r, t) => `<b>${d}</b> von ${n} geprüft · ${r} neu sprechen · ${t} Text ändern`,
+    saved: 'Gespeichert', saving: 'Speichert …', unsaved: 'Nicht gespeichert, neuer Versuch läuft', loading: 'Lädt …',
+    empty: 'Keine Zeile in diesem Filter.', play: 'Abspielen', pause: 'Anhalten', noaudio: 'Keine Aufnahme',
+    denied: 'Kein Zugang', deniedText: 'Der Link enthält kein gültiges Token. Öffne den Link, den das Terminal beim Start zeigt.',
+    keys: '<kbd>J</kbd>/<kbd>K</kbd> nächste/vorige · <kbd>Leertaste</kbd> neu abspielen · <kbd>V</kbd> vorher · <kbd>T</kbd> nächste Fassung · <kbd>1</kbd> passt · <kbd>2</kbd> neu sprechen · <kbd>3</kbd> Text ändern · <kbd>N</kbd> Hinweis',
+  },
+  en: {
+    before: 'Before', after: 'New', take: 'Take', all: 'All', open: 'Open', ok: 'Fine', redo: 'Record again', text: 'Change text',
+    search: 'Search: reference, speaker, word …', export: 'Export list', note: 'Note: how it should sound or what to change in the text …',
+    progress: (d, n, r, t) => `<b>${d}</b> of ${n} reviewed · ${r} to record again · ${t} to change`,
+    saved: 'Saved', saving: 'Saving …', unsaved: 'Not saved, retrying', loading: 'Loading …',
+    empty: 'No line in this filter.', play: 'Play', pause: 'Pause', noaudio: 'No recording',
+    denied: 'No access', deniedText: 'The link has no valid token. Open the link printed in the terminal at start.',
+    keys: '<kbd>J</kbd>/<kbd>K</kbd> next/previous · <kbd>Space</kbd> play new · <kbd>V</kbd> before · <kbd>T</kbd> next take · <kbd>1</kbd> fine · <kbd>2</kbd> record again · <kbd>3</kbd> change text · <kbd>N</kbd> note',
+  },
+};
+const ICON = {
+  play: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z"/></svg>',
+  pause: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h3v11H4zM9 2.5h3v11H9z"/></svg>',
+  ok: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
+  redo: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>',
+  text: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/></svg>',
+};
+const token = new URLSearchParams(location.search).get('t') || '';
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let S = STR.de, M = { items: [] }, V = {}, filter = 'all', query = '', active = -1, shown = [];
+const pending = {};
+const store = (() => { try { return window.localStorage; } catch { return null; } })();
+const backupKey = () => 'ephphatha:' + (M.title || '') + ':pending';
+
+async function api(path, opts = {}) {
+  const r = await fetch(path + (path.includes('?') ? '&' : '?') + 't=' + encodeURIComponent(token), opts);
+  if (r.status === 403) throw new Error('denied');
+  if (!r.ok) throw new Error('http ' + r.status);
+  return r.json();
+}
+
+// Word diff (longest common subsequence over words) for "before" against "after".
+function diff(a, b) {
+  const A = a.split(/(\s+)/).filter(Boolean), B = b.split(/(\s+)/).filter(Boolean);
+  const n = A.length, m = B.length;
+  if (n * m > 400000) return [esc(a), esc(b)];
+  const L = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--)
+    L[i][j] = A[i] === B[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+  let i = 0, j = 0, x = '', y = '';
+  const wrap = (t, tag) => /^\s+$/.test(t) ? t : `<${tag}>${esc(t)}</${tag}>`;
+  while (i < n && j < m) {
+    if (A[i] === B[j]) { x += esc(A[i]); y += esc(B[j]); i++; j++; }
+    else if (L[i + 1][j] >= L[i][j + 1]) x += wrap(A[i++], 'del');
+    else y += wrap(B[j++], 'ins');
+  }
+  while (i < n) x += wrap(A[i++], 'del');
+  while (j < m) y += wrap(B[j++], 'ins');
+  return [x.replace(/<\/del>(\s+)<del>/g, '$1'), y.replace(/<\/ins>(\s+)<ins>/g, '$1')];
+}
+
+function counts() {
+  const c = { all: M.items.length, open: 0, ok: 0, redo: 0, text: 0 };
+  for (const it of M.items) c[(V[it.id] || {}).status || 'open']++;
+  return c;
+}
+function header() {
+  const c = counts(), done = c.ok + c.redo + c.text;
+  $('#progress').innerHTML = S.progress(done, c.all, c.redo, c.text);
+  $('#track').style.width = (c.all ? 100 * done / c.all : 0) + '%';
+  $('#filters').innerHTML = ['all', 'open', 'redo', 'text', 'ok'].map(f =>
+    `<button type="button" data-f="${f}" aria-pressed="${f === filter}">${S[f]}<span class="n">${c[f]}</span></button>`).join('');
+}
+function matches(it) {
+  const st = (V[it.id] || {}).status || 'open';
+  if (filter !== 'all' && st !== filter) return false;
+  if (!query) return true;
+  const hay = [it.ref, it.speaker, it.where, it.group, it.note, it.before?.text, it.after?.text].join(' ').toLowerCase();
+  return query.split(/\s+/).every(w => hay.includes(w));
+}
+function takesOf(it) {
+  const a = it.after || {};
+  return [{ label: S.take + ' 1', audio: a.audio }, ...(a.takes || []).map((t, k) => ({ label: t.label || S.take + ' ' + (k + 2), audio: t.audio }))];
+}
+function playBtn(id, side, audio) {
+  return `<button class="play" type="button" data-play="${side}" data-id="${esc(id)}" aria-pressed="false" ${audio ? '' : 'disabled'}
+    aria-label="${audio ? S.play : S.noaudio}" title="${audio ? S.play : S.noaudio}">${ICON.play}</button>`;
+}
+function render() {
+  header();
+  shown = M.items.filter(matches);
+  if (!shown.length) { $('#list').innerHTML = `<p class="empty">${S.empty}</p>`; return; }
+  let html = '', group = null;
+  shown.forEach((it, k) => {
+    if (it.group && it.group !== group) { group = it.group; html += `<h2 class="group">${esc(group)}</h2>`; }
+    const v = V[it.id] || {}, takes = takesOf(it), tk = Math.min(v.take || 0, takes.length - 1);
+    const [b, a] = diff(it.before?.text || '', it.after?.text || '');
+    html += `<article class="line${k === active ? ' active' : ''}" data-k="${k}" data-id="${esc(it.id)}" tabindex="-1">
+      <div class="meta"><span class="ref">${esc(it.ref || it.id)}</span><span class="speaker">${esc(it.speaker || '')}</span><span class="where">${esc(it.where || '')}</span></div>
+      <div class="panes">
+        <section class="pane before"><h3>${playBtn(it.id, 'before', it.before?.audio)}${S.before}</h3><p>${b}</p><div class="bar2"><i></i></div></section>
+        <section class="pane after"><h3>${playBtn(it.id, 'after', takes[tk].audio)}${S.after}${takes.length > 1 ? `<span class="takes">${takes.map((t, i) =>
+          `<button type="button" data-take="${i}" aria-pressed="${i === tk}">${esc(t.label)}</button>`).join('')}</span>` : ''}</h3><p>${a}</p><div class="bar2"><i></i></div></section>
+      </div>
+      ${it.note ? `<p class="why">${esc(it.note)}</p>` : ''}
+      <div class="verdict">
+        <div class="seg" role="group">${['ok', 'redo', 'text'].map((s, i) =>
+          `<button type="button" data-s="${s}" aria-pressed="${v.status === s}">${ICON[s]}${S[s]} <kbd>${i + 1}</kbd></button>`).join('')}</div>
+        <textarea rows="1" placeholder="${esc(S.note)}" aria-label="${esc(S.note)}">${esc(v.note || '')}</textarea>
+      </div>
+    </article>`;
+  });
+  $('#list').innerHTML = html;
+}
+function card(k) { return $(`.line[data-k="${k}"]`); }
+function setActive(k, scroll = true) {
+  if (!shown.length) return;
+  k = Math.max(0, Math.min(shown.length - 1, k));
+  card(active)?.classList.remove('active');
+  active = k;
+  const el = card(k); el.classList.add('active');
+  if (scroll) el.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+}
+
+// Saving: changes are collected and sent shortly after the last one; a failed send is kept and retried.
+let timer = null, failing = false;
+function setSave(state) {
+  const el = $('#save'); el.className = 'save' + (state === 'busy' ? ' busy' : state === 'err' ? ' err' : '');
+  $('#saveText').textContent = state === 'busy' ? S.saving : state === 'err' ? S.unsaved : S.saved;
+}
+function change(id, patch) {
+  V[id] = { ...(V[id] || {}), ...patch };
+  if (!V[id].status) delete V[id].status;
+  pending[id] = V[id];
+  try { store?.setItem(backupKey(), JSON.stringify(pending)); } catch {}
+  setSave('busy'); clearTimeout(timer); timer = setTimeout(flush, 500);
+}
+async function flush() {
+  const items = { ...pending };
+  if (!Object.keys(items).length) return setSave('ok');
+  try {
+    await api('/api/verdict', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items }) });
+    for (const id in items) if (pending[id] === items[id]) delete pending[id];
+    try { store?.setItem(backupKey(), JSON.stringify(pending)); } catch {}
+    failing = false; setSave(Object.keys(pending).length ? 'busy' : 'ok');
+    if (Object.keys(pending).length) timer = setTimeout(flush, 300);
+  } catch (e) {
+    failing = true; setSave('err'); timer = setTimeout(flush, 4000);
+  }
+}
+
+// One audio element for everything: starting one line stops the other.
+const audio = new Audio(); audio.preload = 'none';
+let playing = null;
+function stopUI() {
+  if (!playing) return;
+  const b = playing.btn; b.setAttribute('aria-pressed', 'false'); b.innerHTML = ICON.play; b.setAttribute('aria-label', S.play);
+  playing.bar.style.width = '0'; playing = null;
+}
+function toggle(btn) {
+  if (!btn || btn.disabled) return;
+  if (playing && playing.btn === btn) { audio.pause(); stopUI(); return; }
+  audio.pause(); stopUI();
+  const it = M.items.find(x => x.id === btn.dataset.id), v = V[it.id] || {};
+  const src = btn.dataset.play === 'before' ? it.before?.audio : takesOf(it)[Math.min(v.take || 0, takesOf(it).length - 1)].audio;
+  if (!src) return;
+  audio.src = '/media/' + src.split('/').map(encodeURIComponent).join('/') + '?t=' + encodeURIComponent(token);
+  playing = { btn, bar: btn.closest('.pane').querySelector('.bar2 i') };
+  btn.setAttribute('aria-pressed', 'true'); btn.innerHTML = ICON.pause; btn.setAttribute('aria-label', S.pause);
+  audio.play().catch(stopUI);
+}
+audio.addEventListener('timeupdate', () => { if (playing && audio.duration) playing.bar.style.width = (100 * audio.currentTime / audio.duration) + '%'; });
+audio.addEventListener('ended', stopUI);
+audio.addEventListener('error', stopUI);
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  const line = t.closest('.line');
+  if (line) setActive(+line.dataset.k, false);
+  if (t.dataset.f) { filter = t.dataset.f; active = -1; render(); return; }
+  if (t.dataset.play) { toggle(t); }
+  else if (t.dataset.s) {
+    const id = line.dataset.id, cur = (V[id] || {}).status;
+    change(id, { status: cur === t.dataset.s ? undefined : t.dataset.s });
+    line.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === V[id].status)));
+    header();
+  } else if (t.dataset.take) {
+    const id = line.dataset.id; change(id, { take: +t.dataset.take });
+    audio.pause(); stopUI(); render(); setActive(active, false);
+    toggle(card(active).querySelector('[data-play="after"]'));
+  }
+  if (e.detail > 0 && !t.closest('.filters')) t.blur?.();
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'q') { query = e.target.value.trim().toLowerCase(); active = -1; render(); return; }
+  if (e.target.tagName === 'TEXTAREA') change(e.target.closest('.line').dataset.id, { note: e.target.value });
+});
+document.addEventListener('focusin', e => { const line = e.target.closest?.('.line'); if (line) setActive(+line.dataset.k, false); });
+document.addEventListener('keydown', e => {
+  const typing = /^(TEXTAREA|INPUT)$/.test(document.activeElement?.tagName);
+  if (typing) { if (e.key === 'Escape') { document.activeElement.blur(); card(active)?.focus(); } return; }
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const el = card(active);
+  const k = e.key.toLowerCase();
+  if (k === 'j' || e.key === 'ArrowDown') { e.preventDefault(); setActive(active + 1); }
+  else if (k === 'k' || e.key === 'ArrowUp') { e.preventDefault(); setActive(active < 0 ? 0 : active - 1); }
+  else if (!el) { if (e.key === ' ') { e.preventDefault(); setActive(0); } }
+  else if (e.key === ' ') { e.preventDefault(); toggle(el.querySelector('[data-play="after"]')); }
+  else if (k === 'v') toggle(el.querySelector('[data-play="before"]'));
+  else if (k === 't') { const b = el.querySelectorAll('[data-take]'); if (b.length) b[((V[el.dataset.id] || {}).take || 0) + 1 < b.length ? ((V[el.dataset.id] || {}).take || 0) + 1 : 0].click(); }
+  else if ('123'.includes(k)) el.querySelectorAll('.seg button')[+k - 1].click();
+  else if (k === 'n') { e.preventDefault(); el.querySelector('textarea').focus(); }
+});
+$('#export').addEventListener('click', () => {
+  const list = M.items.filter(it => { const v = V[it.id] || {}; return v.status === 'redo' || v.status === 'text' || v.note || v.take; })
+    .map(it => ({ id: it.id, ref: it.ref, where: it.where, speaker: it.speaker, ...V[it.id], text: it.after?.text }));
+  const url = URL.createObjectURL(new Blob([JSON.stringify({ manifest: M.title, items: list }, null, 1)], { type: 'application/json' }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: 'ephphatha-liste.json' });
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+window.addEventListener('beforeunload', e => { if (Object.keys(pending).length) { flush(); e.preventDefault(); } });
+
+(async function start() {
+  $('#list').innerHTML = `<p class="empty">${STR.de.loading}</p>`;
+  try {
+    [M, V] = await Promise.all([api('/api/manifest'), api('/api/verdict').then(v => v.items || {})]);
+  } catch (e) {
+    const s = STR[(navigator.language || 'de').slice(0, 2)] || STR.de;
+    $('#list').innerHTML = `<div class="notice" role="alert"><b>${s.denied}</b>${s.deniedText}</div>`;
+    return;
+  }
+  S = STR[M.lang] || STR.de;
+  document.documentElement.lang = M.lang || 'de';
+  document.title = (M.title ? M.title + ' · ' : '') + 'Ephphatha';
+  $('#title').textContent = M.title || 'Ephphatha';
+  $('#q').placeholder = S.search; $('#q').setAttribute('aria-label', S.search);
+  $('#exportText').textContent = S.export; $('#export').setAttribute('aria-label', S.export); $('#export').title = S.export; $('#keys').innerHTML = S.keys;
+  try {  // changes that never reached the server last time
+    const old = JSON.parse(store?.getItem(backupKey()) || '{}');
+    for (const id in old) { V[id] = old[id]; pending[id] = old[id]; }
+  } catch {}
+  setSave(Object.keys(pending).length ? 'busy' : 'ok');
+  render();
+  if (Object.keys(pending).length) flush();
+})();
+</script>
+</body>
+</html>
