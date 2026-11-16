@@ -77,7 +77,13 @@ class Handler(BaseHTTPRequestHandler):
         u = urlparse(self.path); q = parse_qs(u.query)
         if u.path in ('/', '/index.html'):
             body = (HERE / 'index.html').read_bytes()
-            return self._send(200, body, 'text/html; charset=utf-8', {'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; media-src 'self'; img-src 'self' data:"})
+            return self._send(200, body, 'text/html; charset=utf-8', {'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; media-src 'self'; img-src 'self' data:; font-src 'self'"})
+        if u.path.startswith('/fonts/'):  # the bundled fonts (SIL OFL), served without a token like the page itself
+            name = u.path[len('/fonts/'):]
+            f = HERE / 'fonts' / name
+            if re.fullmatch(r'[a-z0-9-]+\.woff2', name) and f.is_file():
+                return self._send(200, f.read_bytes(), 'font/woff2', {'Cache-Control': 'max-age=86400'})
+            return self._send(404, b'{"error":"not found"}')
         if not self._authorized(q):
             return self._send(403, b'{"error":"token"}')
         if u.path == '/api/manifest':

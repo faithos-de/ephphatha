@@ -7,9 +7,13 @@ Listen to recorded lines one by one in the browser and say what must be spoken a
 and after with a word diff, both recordings and the takes to choose from; mark it as fine, *record again* or *change
 text*, add a note, and hand the list back to whoever renders the voices. Made for the TTS voices of the game
 [*Augenzeuge*](https://augenzeuge.faithos.de) (FaithOS), but it knows nothing about the game: any list of lines with
-audio files works. MIT licensed (see `LICENSE`).
+audio files works. MIT licensed (see `LICENSE`); the bundled fonts are under the SIL Open Font License (see below).
 
-- One Python file, standard library only, plus one HTML page without dependencies.
+- One Python file, standard library only, plus one HTML page without dependencies and its fonts.
+- Dressed like the FaithOS games: night stone, lead lines, parchment text and gold light; each group of lines gets its
+  own glass colour.
+- Filtered views stay true while you work: a line marked so that it no longer fits the filter (marked *fine* while
+  *open* is shown) slides aside and folds away, and the next line becomes the active one.
 - Works on a phone in the same Wi-Fi (`--lan`); audio is served with byte ranges, as iPhone Safari requires.
 - Every request needs a token (a new random one each start). The server writes exactly one file, the verdicts next to
   the manifest, and serves audio only from the manifest's media folder.
@@ -25,6 +29,11 @@ python3 tools/ephphatha/ephphatha.py path/to/review.json --todo   # what the rev
 
 Keys: `J`/`K` next/previous, `Space` play the new recording, `V` play the old one, `T` next take, `1` fine,
 `2` record again, `3` change text, `N` note, `Esc` leave the note.
+
+## Fonts
+
+`fonts/` holds Vollkorn (The Vollkorn Project Authors), VT323 (The VT323 Project Authors) and Press Start 2P (The
+Press Start 2P Project Authors), all under the SIL Open Font License 1.1; the licence texts are in `fonts/OFL-*.txt`.
 
 ## Manifest (`review.json`)
 
